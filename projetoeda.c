@@ -18,6 +18,10 @@ void initHeader(header *h){
   h->cont = 0;
 }
 
+proc *initList(proc *l){
+  return NULL;
+}
+
 void insList(header *h,proc *l, int time, int size){
   proc *p = (proc *) malloc(size);
   p->timeProg = time;
@@ -34,8 +38,8 @@ void insList(header *h,proc *l, int time, int size){
   }
   else{
     p->ant = l;
-    p->prox = h->ini;
     l->prox = p;
+    p->prox = h->ini;
     l = p;
   }
 }
@@ -75,28 +79,24 @@ void rmvList(header *h, int id){
 
 
 void clrList(header *h){
-  int i;
   proc *p, *temp;
 
-  i = 0;
   p = h->ini;
   do{
     temp = p->prox;
     free(p);
     p = temp;
-  }while(i < h->cont);
+  }while(p != NULL);
 }
 
 void printList(header *h){
-  int i;
   proc *p;
 
-  i = 0;
   p = h->ini;
   do{
     printf("Id: %d Tamanho: %d\n", p->procId, p->procSize);
     p = p->prox;
-  }while(i < h->cont);
+  }while(p != NULL);
 }
 
 int main(void){
@@ -107,9 +107,11 @@ int main(void){
   head = (header *) malloc (sizeof(header));
 
   initHeader(head);
+  process = initList(process);
   insList(head, process, 10, 50);
+  insList(head, process, 25, 70);
   printList(head);
   clrList(head);
-  
+
   return 0;
 }
