@@ -19,7 +19,7 @@ void initHeader(header *h){
   h->cont = 0;
 }
 
-proc *initList(proc *l){
+proc *initList(void){
   return NULL;
 }
 
@@ -45,7 +45,7 @@ proc *insList(header *h,proc *l, int t, int size){
   return l;
 }
 
-void rmvList(header *h, header *hole, int id){
+void rmvList(header *h, int id){
   int i;
   proc *p;
   p = h->ini;
@@ -54,9 +54,6 @@ void rmvList(header *h, header *hole, int id){
     if(p->procId == id){
       p->type = 'h'; /* tipo de lista: 'h' = 'hole' */
       h->cont--;
-      /* Insere na lista de buracos */
-      insList(hole, p, p->timeProg, p->procSize);
-      /*                            */
       if(p->prox != NULL && p->ant != NULL){
         p->prox->ant = p->ant;
         p->ant->prox = p->prox;
@@ -96,18 +93,18 @@ void clrList(header *h){
   }while(i < h->cont);
 }
 
-void checaTempo(header *h, header *hole, int id, proc *p){
+void checaTempo(header *h,int id, proc *p){
   int clk;
-  clk = (clock() + p->timeInit)/CLOCKS_PER_SEC;
+  clk = (clock() - p->timeInit)/CLOCKS_PER_SEC;
   if(clk >= p->timeProg){
-    rmvList(h, hole, id);
+    rmvList(h,id);
   }
   else{
     printf("Tempo de processo de id %d: %d\n", p->procId, clk);
   }
 }
 
-void printList(header *h, header *hole){
+void printList(header *h){
   int i;
   proc *p;
 
@@ -115,7 +112,7 @@ void printList(header *h, header *hole){
   p = h->ini;
   do{
     printf("Id: %d Tamanho: %d\n", p->procId, p->procSize);
-    checaTempo(h, hole, p->procId, p);
+    checaTempo(h, p->procId, p);
     p = p->prox;
     i++;
   }while(i < h->cont);
@@ -123,24 +120,21 @@ void printList(header *h, header *hole){
 
 
 int main(void){
-  header *headProc, *headHole;
+  header *headProc;
   proc *process;
 
   process = (proc *) malloc (sizeof(proc));
   headProc = (header *) malloc (sizeof(header));
-  headHole = (header *) malloc (sizeof(header));
 
   initHeader(headProc);
-  initHeader(headHole);
+  process = initList();
 
-  process = initList(process);
   process = insList(headProc, process, 1, 50);
   process = insList(headProc, process, 2, 70);
 
-  printList(headProc, headHole);
+  printList(headProc);
 
   clrList(headProc);
-  clrList(headHole);
 
   return 0;
 }
