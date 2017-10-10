@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 typedef struct proc{
   int timeProg, timeInit, procId, procSize;
@@ -18,15 +19,15 @@ void initHeader(header *h){
   h->cont = 0;
 }
 
-proc *initList(proc *l){
+proc *initList(void){
   return NULL;
 }
 
-void insList(header *h,proc *l, int time, int size){
+proc *insList(header *h,proc *l, int t, int size){
   proc *p = (proc *) malloc(size);
-  p->timeProg = time;
+  p->timeProg = t;
   p->timeInit = clock(); /* guarda o valor de quando o processo começou */
-  p->type = 'p';
+  p->type = 'p'; /* tipo de lista: 'p' = 'process' */
   p->procSize = size;
   h->cont++;
   p->procId = h->cont;
@@ -40,8 +41,8 @@ void insList(header *h,proc *l, int time, int size){
     p->ant = l;
     l->prox = p;
     p->prox = h->ini;
-    l = p;
   }
+  return l;
 }
 
 void rmvList(header *h, int id){
@@ -51,7 +52,7 @@ void rmvList(header *h, int id){
   i = 0;
   do{
     if(p->procId == id){
-      p->type = 'h';
+      p->type = 'h'; /* tipo de lista: 'h' = 'hole' */
       h->cont--;
       if(p->prox != NULL && p->ant != NULL){
         p->prox->ant = p->ant;
@@ -79,39 +80,61 @@ void rmvList(header *h, int id){
 
 
 void clrList(header *h){
+  int i;
   proc *p, *temp;
 
+  i = 0;
   p = h->ini;
   do{
     temp = p->prox;
     free(p);
     p = temp;
-  }while(p != NULL);
+    i++;
+  }while(i < h->cont);
+}
+
+void checaTempo(header *h,int id, proc *p){
+  int clk;
+  clk = (clock() - p->timeInit)/CLOCKS_PER_SEC;
+  if(clk >= p->timeProg){
+    rmvList(h,id);
+  }
+  else{
+    printf("Tempo de processo de id %d: %d\n", p->procId, clk);
+  }
 }
 
 void printList(header *h){
+  int i;
   proc *p;
 
+  i = 0;
   p = h->ini;
   do{
     printf("Id: %d Tamanho: %d\n", p->procId, p->procSize);
+    checaTempo(h, p->procId, p);
     p = p->prox;
-  }while(p != NULL);
+    i++;
+  }while(i < h->cont);
 }
 
+
 int main(void){
-  header *head;
+  header *headProc;
   proc *process;
 
   process = (proc *) malloc (sizeof(proc));
-  head = (header *) malloc (sizeof(header));
+  headProc = (header *) malloc (sizeof(header));
 
-  initHeader(head);
-  process = initList(process);
-  insList(head, process, 10, 50);
-  insList(head, process, 25, 70);
-  printList(head);
-  clrList(head);
+  initHeader(headProc);
+  process = initList();
+
+  process = insList(headProc, process, 1, 50);
+  process = insList(headProc, process, 2, 70);
+
+  printList(headProc);
+
+  clrList(headProc);
 
   return 0;
 }
