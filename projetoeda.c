@@ -9,14 +9,16 @@ typedef struct process{
 
 typedef struct{
   process *ini, *top;
-  int cont;
+  int cont, id;
 }header;
+
 
  /* Procedimento de inicialização de cabeçalho */
 void initHeader(header *h){
   h->ini = NULL;
   h->top = NULL;
   h->cont = 0;
+  h->id = 0;
 }
 
 /* Procedimento de inicialização da lista */
@@ -29,7 +31,8 @@ void *initList(header *h, int size){
     inicio->timeInit = 0;
     h->cont++; /* Incrementação do número de
     elementos */
-    inicio->id = h->cont;
+    h->id++; /* Incrementação da id */
+    inicio->id = h->id;
     inicio->size = size;
     inicio->prox = inicio;
     inicio->ant = inicio;
@@ -74,7 +77,8 @@ void insertList(header *h, int tim, int size){
       novo->type = 'p'; /* Tipo 'p': process */
 
       h->cont++;
-      novo->id = h->cont;
+      h->id++;
+      novo->id = h->id;
 
       h->top->prox = novo;
       novo->ant = h->top;
@@ -82,11 +86,46 @@ void insertList(header *h, int tim, int size){
       h->top = novo;
     }
     else{
+      printf("Verificando se é possível reorganizar memória...\n");
+      /* Caso possível, a reordenação dos buracos ocorerrá aqui */
       printf("Não há espaço na memória para o processo.\n");
     }
   }
   else{
-    printf("Não há espaço na memória para o processo.");
+    printf("Não há espaço na memória para o processo.\n");
+  }
+}
+
+/* Função de busca de elemento por id */
+process *idSearch(header *h, int id){
+  process *p;
+  int i;
+
+  p = h->ini;
+  do{
+    if(p->id == id){
+      return p;
+    }
+    i++;
+    p = p->prox;
+  }while(i < h->cont);
+  return NULL;
+}
+
+/* Procedimento de remoção de elementos */
+void removeList(header *h, int id){
+  process *p;
+  p = idSearch(h, id);
+  if(p != NULL){
+    if(p->type == 'h'){
+      printf("Elemento já foi removido.\n");
+    }
+    else{
+      p->type = 'h';
+    }
+  }
+  else{
+    printf("Não há elemento com esse id.\n");
   }
 }
 
@@ -102,7 +141,7 @@ void clearList(header *h){
     free(p);
     p = temp;
     i++;
-  }while(i < h->cont);
+  }while(i < h->cont-1);
 }
 
 /* Procedimento para imprimir os elementos da lista */
@@ -119,9 +158,17 @@ void printList(header *h){
   }while(i < h->cont);
 }
 
+void printaMenu(void){
+  printf(">>>>>> Menu <<<<<<\n");
+  printf("1 - Inserir elemento\n");
+  printf("2 - Imprimir lista\n");
+  printf("3 - Remove elemento\n");
+  printf("0 - Sair\n");
+}
+
 int main(void){
   header *head;
-  int size;
+  int size, tim, id, opt;
 
   head = (header *) malloc (sizeof(header));
 
@@ -136,11 +183,30 @@ int main(void){
   initHeader(head);
   initList(head, size);
 
-  /* Testes de funcionamento provisórios */
-  insertList(head, 10, 30);
-  insertList(head, 10, 20);
+  do{
+    printaMenu();
+    scanf("%d", &opt);
+    getchar();
+    switch(opt){
+      case 1:
+        printf("Digite o espaço e tempo para o processo: \n");
+        scanf("%d", &size);
+        scanf("%d", &tim);
+        insertList(head, tim, size);
+        break;
+      case 2:
+        printList(head);
+        break;
+      case 3:
+        printf("Digite a id do elemento a remover: \n");
+        scanf("%d", &id);
+        removeList(head, id);
+        break;
+      case 0:
+        printf("Encerrando...\n");
+    }
+  }while(opt);
 
-  printList(head);
   clearList(head);
   return 0;
 }
