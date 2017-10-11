@@ -60,6 +60,43 @@ process *memoryFirstSearch(header *h){
   memória */
 }
 
+/*procedimento de reordenacao dos buracos*/
+void reOrganize(header *h){
+  int sum=0;
+  int i;
+  process *p;
+  process *temp;
+  process *aux;
+  i = 0;
+  temp = h->ini;
+  p=temp->prox;
+  aux=p->prox;
+  do{
+    if(p->id=='h'){
+        sum += p->size;
+	temp->prox=aux;
+	aux->ant=temp;
+	free(p);
+	p=aux;
+	aux=p->prox;
+    }
+    else{
+      p = p->prox;
+      i++;
+    }
+  }while(i < h->cont);
+  process *novo = (process*)malloc(sum);
+  novo->type='h';
+  novo->timeProg=0;
+  novo->timeInit=0;
+  novo->size=sum;
+  novo->ant=h->top;
+  (h->top)->prox=novo;
+  novo->prox=h->ini;
+  (h->ini)->ant=novo;
+  h->top=novo;
+}
+
 /* Procedimento de inserção de elementos à lista*/
 void insertList(header *h, int tim, int size){
   process *p, *novo;
