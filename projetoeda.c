@@ -1,87 +1,99 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
 
-typedef struct proc{
-  int timeProg, timeInit, procId, procSize;
-  struct proc *prox, *ant;
+typedef struct process{
+  int timeProg, timeInit, id, size;
+  struct process *prox, *ant;
   char type;
-}proc;
+}process;
 
 typedef struct{
-  proc *ini;
+  process *ini, *top;
   int cont;
 }header;
 
+ /* Procedimento de inicialização de cabeçalho */
 void initHeader(header *h){
   h->ini = NULL;
+  h->top = NULL;
   h->cont = 0;
 }
 
-proc *initList(void){
-  return NULL;
+/* Procedimento de inicialização da lista */
+void *initList(header *h, int size){
+    process *inicio;
+    inicio = (process *) malloc (size);
+    /* Inicialização dos dos atributos do buraco */
+    inicio->type = 'h'; /* tipo buraco: 'h' */
+    inicio->timeProg = 0;
+    inicio->timeInit = 0;
+    h->cont++; /* Incrementação do número de
+    elementos */
+    inicio->id = h->cont;
+    inicio->size = size;
+    inicio->prox = inicio;
+    inicio->ant = inicio;
+    /* Inserção no cabeçalho */
+    h->ini = inicio;
+    h->top = inicio;
 }
 
-proc *insList(header *h,proc *l, int t, int size){
-  proc *p = (proc *) malloc(size);
-  p->timeProg = t;
-  p->timeInit = clock(); /* guarda o valor de quando o processo começou */
-  p->type = 'p'; /* tipo de lista: 'p' = 'process' */
-  p->procSize = size;
-  h->cont++;
-  p->procId = h->cont;
-  if(l == NULL){
-    p->prox = NULL;
-    p->ant = NULL;
-    l = p;
-    h->ini = l;
-  }
-  else{
-    p->ant = l;
-    l->prox = p;
-    p->prox = h->ini;
-  }
-  return l;
-}
-
-void rmvList(header *h, int id){
+process *memoryFirstSearch(header *h){
+  process *p;
   int i;
-  proc *p;
+
   p = h->ini;
   i = 0;
+
   do{
-    if(p->procId == id){
-      p->type = 'h'; /* tipo de lista: 'h' = 'hole' */
-      h->cont--;
-      if(p->prox != NULL && p->ant != NULL){
-        p->prox->ant = p->ant;
-        p->ant->prox = p->prox;
-        p->prox = NULL;
-        p->ant = NULL;
-      }
-      else if(p->prox == NULL && p->ant != NULL){
-        p->ant->prox = NULL;
-        p->ant = NULL;
-      }
-      else if(p->prox == NULL && p->ant == NULL){
-        h->ini = NULL;
-        p->prox = NULL;
-        p->ant = NULL;
-      }
-      else{
-        h->ini = p->prox;
-        p->prox->ant = NULL;
-      }
+    if(p->type == 'h'){
+      return p; /* Buraco encontrado */
     }
+    p = p->prox;
     i++;
   }while(i < h->cont);
+
+  return NULL; /* Falha ao achar buraco na
+  memória */
 }
 
+/* Procedimento de inserção de elementos à lista*/
+void insertList(header *h, int tim, int size){
+  process *p, *novo;
+  p = memoryFirstSearch(h);
+  if(p != NULL){
+    if((p->size - size) > 0){
+      /* Realocação do tamanho do buraco encontrado */
+      p = (process *) realloc(p, p->size - size);
+      p->size = p->size - size;
+      /* Alocação do novo elemento */
+      novo = (process *) malloc(size);
+      novo->timeProg = tim;
+      novo->timeInit = 0;
+      novo->size = size;
+      novo->type = 'p'; /* Tipo 'p': process */
 
-void clrList(header *h){
+      h->cont++;
+      novo->id = h->cont;
+
+      h->top->prox = novo;
+      novo->ant = h->top;
+      novo->prox = h->ini;
+      h->top = novo;
+    }
+    else{
+      printf("Não há espaço na memória para o processo.\n");
+    }
+  }
+  else{
+    printf("Não há espaço na memória para o processo.");
+  }
+}
+
+/* Procedimento para liberar ponteiros ao final do programa */
+void clearList(header *h){
   int i;
-  proc *p, *temp;
+  process *p, *temp;
 
   i = 0;
   p = h->ini;
@@ -93,48 +105,42 @@ void clrList(header *h){
   }while(i < h->cont);
 }
 
-void checaTempo(header *h,int id, proc *p){
-  int clk;
-  clk = (clock() - p->timeInit)/CLOCKS_PER_SEC;
-  if(clk >= p->timeProg){
-    rmvList(h,id);
-  }
-  else{
-    printf("Tempo de processo de id %d: %d\n", p->procId, clk);
-  }
-}
-
+/* Procedimento para imprimir os elementos da lista */
 void printList(header *h){
   int i;
-  proc *p;
+  process *p;
 
   i = 0;
   p = h->ini;
   do{
-    printf("Id: %d Tamanho: %d\n", p->procId, p->procSize);
-    checaTempo(h, p->procId, p);
+    printf("Id: %d Tamanho: %d Tipo: %c\n", p->id, p->size, p->type);
     p = p->prox;
     i++;
   }while(i < h->cont);
 }
 
-
 int main(void){
-  header *headProc;
-  proc *process;
+  header *head;
+  int size;
 
-  process = (proc *) malloc (sizeof(proc));
-  headProc = (header *) malloc (sizeof(header));
+  head = (header *) malloc (sizeof(header));
 
-  initHeader(headProc);
-  process = initList();
+  printf("Digite o espaço na memória destinado para os processos: \n");
+  do{
+    scanf("%d", &size);
+    if(size < 0){
+      printf("Por favor, digite um valor positivo. \n");
+    }
+  }while(size < 0);
 
-  process = insList(headProc, process, 1, 50);
-  process = insList(headProc, process, 2, 70);
+  initHeader(head);
+  initList(head, size);
 
-  printList(headProc);
+  /* Testes de funcionamento provisórios */
+  insertList(head, 10, 30);
+  insertList(head, 10, 20);
 
-  clrList(headProc);
-
+  printList(head);
+  clearList(head);
   return 0;
 }
