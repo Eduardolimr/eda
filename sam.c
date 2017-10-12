@@ -26,6 +26,22 @@ int randomNumber(){
 	return randomnumber;
 }
 
+void Iteracao(){
+	int sum;
+	processo *aux;
+	aux=head;
+	do{
+		sum=0;
+		if(aux->tempo>0){
+			aux->tempo--;
+		}
+		if(aux->tempo==0){
+			aux->id=0;
+		}
+		aux=aux->prox;
+	}while(aux!=head);
+}
+
 void listaInit(){
 	processo *novo = (processo*) malloc (size);
 	novo->tempo=0;
@@ -182,7 +198,7 @@ int main(){
 				insertLista(tamanho);
 				break;
 			case 2:
-				reArrange();
+				Iteracao();
 				break;
 			case 0:
 				break;
