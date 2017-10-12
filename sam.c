@@ -84,17 +84,36 @@ void insertLista(int tamanho){
 			temp=temp->prox;
 		}
 		newSize=(aux->tam)-tamanho;
-		aux = (processo*)realloc(aux, newSize);
-		aux->tam=newSize;
-		novo = (processo*)malloc(tamanho);
-		novo->tam=tamanho;
-		novo->id=idUtil;
-		idUtil++;
-		novo->tempo=randomNumber();
-		temp->prox=novo;
-		novo->ant=temp;
-		novo->prox=aux;
-		aux->ant=novo;
+		if(newSize!=0){
+			aux = (processo*)realloc(aux, newSize);
+			aux->tam=newSize;
+			novo = (processo*)malloc(tamanho);
+			novo->tam=tamanho;
+			novo->id=idUtil;
+			idUtil++;
+			novo->tempo=randomNumber();
+			temp->prox=novo;
+			novo->ant=temp;
+			novo->prox=aux;
+			aux->ant=novo;
+		}
+		if(newSize==0){
+			processo *aj;
+			aj=aux->prox;
+			free(aux);
+			novo = (processo*)malloc(tamanho);
+			novo->tam=tamanho;
+			novo->id=idUtil;
+			idUtil++;
+			novo->tempo=randomNumber();
+			temp->prox=novo;
+			novo->ant=temp;
+			novo->prox=aj;
+			aj->ant=novo;
+			if(novo->prox==head){
+				tail=novo;
+			}
+		}
 	}
 }
 
