@@ -38,45 +38,64 @@ void listaInit(){
 }
 
 int checarValid(int tamanho){
+	int i=0;
 	processo *aux;
 	aux=head;
-	int i=0;
 	do{
-		if(aux->id==0 && aux->tam>tamanho){
+		if(aux->id==0 && aux->tam>=tamanho){
 			i++;
-		}	
-	}while(aux!=tail);
-	if(i>0){
-		return 1;
+		}
+		aux=aux->prox;
+	}while(aux!=head);
+	if(i==0){
+		return 0;
 	}
 	else{
-		return 0;
+		return 1;
 	}
 }
 
 void insertLista(int tamanho){
 	int newSize;
-	if(checarValid(tamanho)==1){
-		processo *aux;
-		processo *temp;
+	processo *aux;
+	processo *temp;
+	processo *novo;
+	if(head==tail){
 		aux=head;
-		while(aux->id!=0 && aux->tam<tamanho){
-			temp=aux;
-			aux=aux->prox;
-		}
-		newSize=(aux->tam)-tamanho;
+		newSize= (aux->tam)-tamanho;
 		aux = (processo*)realloc(aux,newSize);
-		processo *novo = (processo*)malloc(tamanho);
+		aux->tam=newSize;
+		novo = (processo*)malloc(tamanho);
 		novo->id=idUtil;
 		idUtil++;
-		novo->tam=newSize;
+		novo->tam=tamanho;
 		novo->tempo=randomNumber();
-		novo->prox=temp->prox;
-		novo->ant=aux->ant;
+		head->ant=novo;
+		tail->prox=novo;
+		novo->prox=head;
+		novo->ant=tail;
+		head=novo;
+	}
+	else if(checarValid(tamanho)==1){
+		temp=tail;
+		aux=head;
+		while((aux->id)!=0 || (aux->tam)<tamanho){
+			aux=aux->prox;
+			temp=temp->prox;
+		}
+		newSize=(aux->tam)-tamanho;
+		aux = (processo*)realloc(aux, newSize);
+		aux->tam=newSize;
+		novo = (processo*)malloc(tamanho);
+		novo->tam=tamanho;
+		novo->id=idUtil;
+		idUtil++;
+		novo->tempo=randomNumber();
 		temp->prox=novo;
+		novo->ant=temp;
+		novo->prox=aux;
 		aux->ant=novo;
 	}
-
 }
 
 void reArrange(){
@@ -108,7 +127,7 @@ void printLista(){
 	processo *aux;
 	aux=head;
 	do{
-		printf("%d|%d->", aux->id, aux->tam);
+		printf("|ID:%d|Time:%d|Size:%d|->", aux->id,aux->tempo, aux->tam);
 		aux=aux->prox;
 	}while(aux!=head);
 	printf("\n");	
