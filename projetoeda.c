@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MINSIZE 18
+
 typedef struct process{
   int timeProg, timeInit, id, size;
   struct process *prox, *ant;
@@ -17,8 +19,8 @@ typedef struct{
 void initHeader(header *h){
   h->ini = NULL;
   h->top = NULL;
-  h->cont = 0;
-  h->id = 0;
+  h->cont = 0; /* Número de elementos */
+  h->id = 0; /* Id dos elementos */
 }
 
 /* Procedimento de inicialização da lista */
@@ -26,21 +28,21 @@ void *initList(header *h, int size){
     process *inicio;
     inicio = (process *) malloc (size);
     /* Inicialização dos dos atributos do buraco */
-    inicio->type = 'h'; /* tipo buraco: 'h' */
+    inicio->type = 'h'; /* tipo "buraco": 'h' */
     inicio->timeProg = 0;
     inicio->timeInit = 0;
-    h->cont++; /* Incrementação do número de
-    elementos */
-    h->id++; /* Incrementação da id */
+    h->cont++;
+    h->id++;
     inicio->id = h->id;
     inicio->size = size;
-    inicio->prox = inicio;
-    inicio->ant = inicio;
     /* Inserção no cabeçalho */
     h->ini = inicio;
     h->top = inicio;
+    inicio->prox = inicio;
+    inicio->ant = inicio;
 }
 
+/* Procura do primeiro buraco disponível */
 process *memoryFirstSearch(header *h){
   process *p;
   int i;
@@ -60,71 +62,114 @@ process *memoryFirstSearch(header *h){
   memória */
 }
 
-/*procedimento de reordenacao dos buracos*/
-void reOrganize(header *h){
-  int sum=0;
-  int i;
-  process *p;
-  process *temp;
-  process *aux;
-  i = 0;
-  temp = h->ini;
-  p=temp->prox;
-  aux=p->prox;
+/* Função para reorganizar buracos para alocar novo processo */
+int reOrganize(header *h){
+  process *p, *temp;
+  int aux, size, success, i;
+
+  p = h->ini;
+  i = aux = size = success = 0;
+
   do{
-    if(p->id=='h'){
-        sum += p->size;
-	temp->prox=aux;
-	aux->ant=temp;
-	free(p);
-	p=aux;
-	aux=p->prox;
+    if(p->type == 'h' && aux != 0){
+      /* Removendo buraco 'p' da lsita */
+      p->ant->prox = p->prox;
+      p->prox->ant = p->ant;
+      /* Guardando seu tamanho antes de liberar */
+      size+=p->size;
+      free(p);
+      /* Realocando buraco inicial */
+      printf("Tamanho p: %d\n", size);
+      printf("Tamanho temp: %d\n", temp->size);
+      size = temp->size + size;
+      printf("Tamanho a ser adicionado: %d\n", size);
+      temp = realloc(temp, size);
+      temp->size = size;
+      printf("Tamanho temp: %d\n", temp->size);
+      success++;
+      h->cont--;
     }
-    else{
-      p = p->prox;
-      i++;
+    else if(p->type == 'h' && aux == 0){
+      /* Procura do primeiro buraco na lista */
+      temp = p;
+      aux++;
     }
+    p = p->prox;
+    i++;
   }while(i < h->cont);
-  process *novo = (process*)malloc(sum);
-  novo->type='h';
-  novo->timeProg=0;
-  novo->timeInit=0;
-  novo->size=sum;
-  novo->ant=h->top;
-  (h->top)->prox=novo;
-  novo->prox=h->ini;
-  (h->ini)->ant=novo;
-  h->top=novo;
+  /* Retornando flag 'sucess'; caso success == 1, foi feita realocação
+                               caso success == 0, não foi feita realocação
+  */
+  return success;
 }
 
 /* Procedimento de inserção de elementos à lista*/
-void insertList(header *h, int tim, int size){
+void insertList(header *h, int tim, int size, int passedTime){
   process *p, *novo;
   p = memoryFirstSearch(h);
   if(p != NULL){
     if((p->size - size) > 0){
       /* Realocação do tamanho do buraco encontrado */
-      p = (process *) realloc(p, p->size - size);
+      p = realloc(p, p->size - size);
       p->size = p->size - size;
       /* Alocação do novo elemento */
       novo = (process *) malloc(size);
       novo->timeProg = tim;
-      novo->timeInit = 0;
+      novo->timeInit = passedTime;
       novo->size = size;
-      novo->type = 'p'; /* Tipo 'p': process */
+      novo->type = 'p'; /* Tipo "process": 'p' */
 
       h->cont++;
       h->id++;
       novo->id = h->id;
 
-      h->top->prox = novo;
-      novo->ant = h->top;
-      novo->prox = h->ini;
-      h->top = novo;
+      /* A inserção nesse programa é sempre feita no primeiro
+      espaço de memória disponível, não sendo no início nem no fim
+      na maioria dos casos */
+      if(h->ini != h->top){
+        p->ant->prox = novo;
+        p->ant = novo;
+        novo->prox = p;
+      }
+      else{  /* Caso especial de primeira inserção */
+        p->prox = novo;
+        p->ant = novo;
+        novo->prox = p;
+        novo->ant = p;
+        h->ini = novo;
+        h->top = p;
+      }
     }
     else{
       printf("Verificando se é possível reorganizar memória...\n");
-      /* Caso possível, a reordenação dos buracos ocorerrá aqui */
+      if(reOrganize(h)){ /* Alocação pôde ser feita */
+        p = memoryFirstSearch(h);
+        printf("Tamanho vsf: %d\n", p->size - size);
+        if((p->size - size) > 0){
+          /* Realocação do tamanho do buraco encontrado */
+          p = realloc(p, p->size - size);
+          p->size = p->size - size;
+          /* Alocação do novo elemento */
+          novo = (process *) malloc(size);
+          novo->timeProg = tim;
+          novo->size = size;
+          novo->type = 'p';  /* Tipo "process": 'p' */
+
+          h->cont++;
+          h->id++;
+          novo->id = h->id;
+
+          p->ant->prox = novo;
+          p->ant = novo;
+          novo->prox = p;
+        }
+        else{
+          printf("Foi feita realocação, mas o processo desejado ainda é grande demais para armazenar.\n");
+        }
+      }
+      else{ /* Não pôde ser feita realocação */
+        printf("Não há espaço para realocação de memória.\n");
+      }
       printf("Não há espaço na memória para o processo.\n");
     }
   }
@@ -162,8 +207,25 @@ void removeList(header *h, int id){
     }
   }
   else{
-    printf("Não há elemento com esse id.\n");
+    printf("Não há processo com esse id. \n");
   }
+}
+
+/* Procedimento para checar a lista por processos que já expiraram */
+void checkTime(header *h, int passedTime){
+    process *p;
+    int i, totalTime;
+
+    p = h->ini;
+    totalTime = passedTime - p->timeInit;
+    do{
+      /* Apenas remover caso seja do tipo processo('p') e tempo expirado */
+      if((totalTime - p->timeProg) >= 0 && p->type == 'p'){
+        p->type = 'h';
+      }
+      p = p->prox;
+      i++;
+    }while(i < h->cont);
 }
 
 /* Procedimento para liberar ponteiros ao final do programa */
@@ -182,20 +244,28 @@ void clearList(header *h){
 }
 
 /* Procedimento para imprimir os elementos da lista */
-void printList(header *h){
-  int i;
+void printList(header *h, int passedTime){
+  int i, tim;
   process *p;
 
   i = 0;
   p = h->ini;
   do{
+    tim = passedTime - p->timeInit;
+    if(p->type == 'p'){
+      printf("Tempo de execução: %d ", tim);
+    }
+    else{
+      printf("Tempo de execução: N/A ");
+    }
     printf("Id: %d Tamanho: %d Tipo: %c\n", p->id, p->size, p->type);
     p = p->prox;
     i++;
   }while(i < h->cont);
 }
 
-void printaMenu(void){
+/*Procedimento que printa o menu de opções para o usuário */
+void printMenu(void){
   printf(">>>>>> Menu <<<<<<\n");
   printf("1 - Inserir elemento\n");
   printf("2 - Imprimir lista\n");
@@ -206,7 +276,9 @@ void printaMenu(void){
 int main(void){
   header *head;
   int size, tim, id, opt;
+  int passedTime;
 
+  passedTime = 0;
   head = (header *) malloc (sizeof(header));
 
   printf("Digite o espaço na memória destinado para os processos: \n");
@@ -221,18 +293,28 @@ int main(void){
   initList(head, size);
 
   do{
-    printaMenu();
+    printMenu();
     scanf("%d", &opt);
     getchar();
     switch(opt){
       case 1:
         printf("Digite o espaço e tempo para o processo: \n");
-        scanf("%d", &size);
-        scanf("%d", &tim);
-        insertList(head, tim, size);
+        do{
+          scanf("%d", &size);
+          if(size < MINSIZE){
+            printf("Tamanho muito pequeno! Digite um valor maior que 17 bytes.\n");
+          }
+        }while(size < MINSIZE);
+        do{
+          scanf("%d", &tim);
+          if(tim < 0){
+            printf("Tempo muito pequeno! Digite um valor maior que 0.\n");
+          }
+        }while(tim < 0);
+        insertList(head, tim, size, passedTime);
         break;
       case 2:
-        printList(head);
+        printList(head, passedTime);
         break;
       case 3:
         printf("Digite a id do elemento a remover: \n");
@@ -241,6 +323,10 @@ int main(void){
         break;
       case 0:
         printf("Encerrando...\n");
+    }
+    printf("\n\nTempo passado desde o início do programa: %d\n\n", ++passedTime);
+    if(opt){
+      checkTime(head, passedTime);
     }
   }while(opt);
 
