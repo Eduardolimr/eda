@@ -79,20 +79,19 @@ int reOrganize(header *h){
       size+=p->size;
       free(p);
       /* Realocando buraco inicial */
-      free(temp);
-      temp = (process *) malloc (size);
-      temp->type = 'h';
-      temp->timeProg = 0;
-      temp->timeInit = 0;
-      temp->id = h->id;
+      printf("Tamanho p: %d\n", size);
+      printf("Tamanho temp: %d\n", temp->size);
+      size = temp->size + size;
+      printf("Tamanho a ser adicionado: %d\n", size);
+      temp = realloc(temp, size);
       temp->size = size;
+      printf("Tamanho temp: %d\n", temp->size);
       success++;
       h->cont--;
     }
     else if(p->type == 'h' && aux == 0){
       /* Procura do primeiro buraco na lista */
       temp = p;
-      size = temp->size;
       aux++;
     }
     p = p->prox;
@@ -145,6 +144,7 @@ void insertList(header *h, int tim, int size, int passedTime){
       printf("Verificando se é possível reorganizar memória...\n");
       if(reOrganize(h)){ /* Alocação pôde ser feita */
         p = memoryFirstSearch(h);
+        printf("Tamanho vsf: %d\n", p->size - size);
         if((p->size - size) > 0){
           /* Realocação do tamanho do buraco encontrado */
           p = realloc(p, p->size - size);
@@ -207,7 +207,7 @@ void removeList(header *h, int id){
     }
   }
   else{
-    printf("Não há elemento com esse id.\n");
+    printf("Não há processo com esse id. \n");
   }
 }
 
@@ -220,8 +220,8 @@ void checkTime(header *h, int passedTime){
     totalTime = passedTime - p->timeInit;
     do{
       /* Apenas remover caso seja do tipo processo('p') e tempo expirado */
-      if((p->timeProg - totalTime) <= 0 && p->type == 'p'){
-        removeList(h, p->id);
+      if((totalTime - p->timeProg) >= 0 && p->type == 'p'){
+        p->type = 'h';
       }
       p = p->prox;
       i++;
@@ -244,33 +244,24 @@ void clearList(header *h){
 }
 
 /* Procedimento para imprimir os elementos da lista */
-void printList(header *h){
-  int i;
+void printList(header *h, int passedTime){
+  int i, tim;
   process *p;
 
   i = 0;
   p = h->ini;
   do{
+    tim = passedTime - p->timeInit;
+    if(p->type == 'p'){
+      printf("Tempo de execução: %d ", tim);
+    }
+    else{
+      printf("Tempo de execução: N/A ");
+    }
     printf("Id: %d Tamanho: %d Tipo: %c\n", p->id, p->size, p->type);
     p = p->prox;
     i++;
   }while(i < h->cont);
-}
-
-/* Função de validação de tempo */
-int validateTime(int temp){
-  if(temp <= 0){
-    return 0;
-  }
-  return 1;
-}
-
-/* Função de validação de tamanho */
-int validateSize(int size){
-  if(size < MINSIZE){
-    return 0;
-  }
-  return 1;
 }
 
 /*Procedimento que printa o menu de opções para o usuário */
@@ -310,20 +301,20 @@ int main(void){
         printf("Digite o espaço e tempo para o processo: \n");
         do{
           scanf("%d", &size);
-          if(!validateSize(size)){
+          if(size < MINSIZE){
             printf("Tamanho muito pequeno! Digite um valor maior que 17 bytes.\n");
           }
-        }while(!validateSize(size));
+        }while(size < MINSIZE);
         do{
           scanf("%d", &tim);
-          if(!validateTime(tim)){
+          if(tim < 0){
             printf("Tempo muito pequeno! Digite um valor maior que 0.\n");
           }
-        }while(!validateTime(tim));
+        }while(tim < 0);
         insertList(head, tim, size, passedTime);
         break;
       case 2:
-        printList(head);
+        printList(head, passedTime);
         break;
       case 3:
         printf("Digite a id do elemento a remover: \n");
@@ -339,6 +330,6 @@ int main(void){
     }
   }while(opt);
 
-   clearList(head);
+  clearList(head);
   return 0;
 }
