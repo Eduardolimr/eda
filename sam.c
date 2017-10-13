@@ -29,13 +29,15 @@ int randomNumber(){
 void Iteracao(){
 	int sum;
 	processo *aux;
+	processo *temp;
+	processo *prev;
 	aux=head;
 	do{
 		sum=0;
 		if(aux->tempo>0){
 			aux->tempo--;
 		}
-		if(aux->tempo==0){
+		if(aux->tempo==0){	
 			aux->id=0;
 		}
 		aux=aux->prox;
@@ -133,28 +135,54 @@ void insertLista(int tamanho){
 	}
 }
 
-void reArrange(){
-	int total=0;
+int findHoleNo(){
+	int No=0;
 	processo *aux;
-	processo *temp;
 	aux=head;
-	while(aux!=tail){
+	do{
 		if(aux->id==0){
-			total+=aux->tam;
-			temp=aux->ant;
-			temp->prox=aux->prox;
-			temp=aux->prox;
-			temp->ant=aux->ant;
-			free(aux);
-			aux=temp;
+			No++;
 		}
 		aux=aux->prox;
+	}while(aux!=head);
+	return No;
+}
+
+void reArrange(){
+	int tot,sum=0;
+	tot = findHoleNo();	
+	processo *aux;
+	processo *temp;
+	processo *next;
+	aux=head;
+	temp=tail;
+	while(tot!=0){
+		if(aux->id==0){
+			next=aux->prox;
+			temp->prox=next;
+			next->ant=temp;
+			sum+=aux->tam;
+			if(head==aux){
+				head=next;
+			}
+			else if(tail==aux){
+				tail=temp;
+			}
+			free(aux);
+			aux=next;
+			tot--;
+		}
+		aux=aux->prox;
+		temp=temp->prox;
 	}
-	processo *novo = (processo*)malloc(total);
-	novo->tempo=0;
+	processo *novo = (processo*)malloc(sum);
 	novo->id=0;
-	novo->prox=head;
+	novo->tempo=0;
+	novo->tam=sum;
+	novo->ant=tail;
 	tail->prox=novo;
+	novo->prox=head;
+	head->ant=novo;
 	tail=novo;
 }
 
@@ -189,7 +217,7 @@ int main(){
 	listaInit();
 	printLista();
 	do{
-		printf("1 - Inserir\n2 - Iteracao(rearrange)\n0 - sair\n");
+		printf("1 - Inserir\n2 - Iteracao\n3 - Rearrange\n0 - Sair\n");
 		scanf("%d",&op);
 		switch(op){
 			case 1:
@@ -199,6 +227,9 @@ int main(){
 				break;
 			case 2:
 				Iteracao();
+				break;
+			case 3:
+				reArrange();
 				break;
 			case 0:
 				break;
