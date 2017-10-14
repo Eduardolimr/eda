@@ -264,12 +264,79 @@ void printList(header *h, int passedTime){
   }while(i < h->cont);
 }
 
+/*procedimento que grava em arquivo*/
+void printFile(header *h, int passedTime){
+  int i, tim;
+  process *p;
+  FILE *fp;
+  FILE *head;
+  fp = fopen("file.txt", "w");
+
+  i = 0;
+  p = h->ini;
+  do{
+    fprintf(fp, "%d %d %d ", p->timeInit, p->id, p->size);
+    if(p->type=='p'){
+	fprintf(fp,"%d ",1);
+    }
+    else if(p->type=='h'){
+	fprintf(fp,"%d ",0);
+    }
+    p = p->prox;
+    i++;
+  }while(i < h->cont);
+  fclose(fp);
+  head = fopen("header.txt", "w");
+  fprintf(head,"%d %d %d", h->id, h->cont, passedTime);
+  fclose(head);
+}
+
+void readFile(header *h, int *passedTime){
+	FILE *fp;
+	FILE *head;
+	int id,time,size, number, typeb;
+	int i=1;
+	/*head = fopen("head.txt", "r");
+	fscanf(head,"%d", &number);
+	*h->id=number;
+	fscanf(head,"%d", &number);
+	*h->cont=number;
+	fscanf(head,"%d", &number);
+	*passedTime=number;
+	fclose(head);*/
+	fp = fopen("file.txt", "r");
+	while(fscanf(fp,"%d",&number)==1){
+		switch(i){
+			case 1:
+				time=number;
+				i++;
+				break;
+			case 2:
+				id=number;
+				i++;
+				break;
+			case 3:
+				size=number;
+				i++;
+				break;
+			case 4:
+				typeb=number;
+				i=1;
+				printf("Time: %d ID: %d Size: %d Type: %d\n",time, id, size, typeb);
+				break;
+		}	
+	}
+	fclose(fp);
+}
+
 /*Procedimento que printa o menu de opções para o usuário */
 void printMenu(void){
   printf(">>>>>> Menu <<<<<<\n");
   printf("1 - Inserir elemento\n");
   printf("2 - Imprimir lista\n");
   printf("3 - Remove elemento\n");
+  printf("4 - Escreve arquivo\n");
+  printf("5 - Ler arquivo\n");
   printf("0 - Sair\n");
 }
 
@@ -321,6 +388,12 @@ int main(void){
         scanf("%d", &id);
         removeList(head, id);
         break;
+      case 4:
+	printFile(head,passedTime);
+	break;
+      case 5:
+	readFile(head, &passedTime);
+	break;
       case 0:
         printf("Encerrando...\n");
     }
