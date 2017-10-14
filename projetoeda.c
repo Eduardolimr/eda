@@ -323,8 +323,8 @@ void readFile(header *h, int *passedTime){
 				typeb=number;
 				i=1;
 				printf("Time: %d ID: %d Size: %d Type: %d\n",time, id, size, typeb);
-				break;
-		}	
+        insertList(h, time, size, *passedTime);
+		}
 	}
 	fclose(fp);
 }
@@ -389,11 +389,11 @@ int main(void){
         removeList(head, id);
         break;
       case 4:
-	printFile(head,passedTime);
-	break;
+	      printFile(head,passedTime);
+	      break;
       case 5:
-	readFile(head, &passedTime);
-	break;
+	      readFile(head, &passedTime);
+	      break;
       case 0:
         printf("Encerrando...\n");
     }
